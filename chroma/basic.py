@@ -1,14 +1,15 @@
-import openai
 import os
+
+import openai
+from openai import OpenAI
 
 import chromadb
 from chromadb.utils.embedding_functions.sentence_transformer_embedding_function import \
     SentenceTransformerEmbeddingFunction
-from dotenv import load_dotenv, find_dotenv
-from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 
-from openai import OpenAI
-from pypdf import PdfReader
+from dotenv import load_dotenv, find_dotenv
+
+from helper_functions import read_pdf, chunk_texts
 
 
 _ = load_dotenv(find_dotenv())  # read local .env file
@@ -16,27 +17,6 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 
 openai_client = OpenAI()
 chroma_client = chromadb.Client()
-
-
-def read_pdf(file_path):
-    reader = PdfReader(file_path)
-    pdf_texts = [p.extract_text().strip for p in reader.pages]
-    pdf_texts = [p for p in pdf_texts if p]
-    return pdf_texts
-
-
-def chunk_texts(texts):
-    character_splitter = RecursiveCharacterTextSplitter(separators=["\n\n", "\n", ". ", " ", ""],
-                                                        chunk_size=1000,
-                                                        chunk_overlap=0)
-    character_split_texts = character_splitter.split_text(texts)
-    token_splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=0, tokens_per_chunk=250)
-
-    token_split_texts = []
-    for text in character_split_texts:
-        token_split_texts.extend(token_splitter.split_text(text))
-
-    return token_split_texts
 
 
 def embed_documents(texts):
@@ -57,7 +37,7 @@ def rag(question, retrieved_documents, model="gpt-4o-mini"):
         },
         {"role": "user", "content": f"Question: {question}. \n Information: {information}"}
     ]
-    response = openai.chat.completions.create(model=model, messages=messages)
+    response = openai_client.chat.completions.create(model=model, messages=messages)
     content = response.choices[0].message.content
     return content
 
