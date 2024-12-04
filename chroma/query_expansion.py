@@ -18,11 +18,14 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 openai_client = OpenAI()
 chroma_client = chromadb.Client()
 
+embed_function = SentenceTransformerEmbeddingFunction()
+chroma_collection = chroma_client.create_collection("data_collection", embedding_function=embed_function)
 
-def embed_documents(texts):
+
+def embed_documents(documents):
     try:
-        ids = [str(i) for i in range(len(texts))]
-        chroma_collection.add(ids=ids, documents=texts)
+        ids = [str(i) for i in range(len(documents))]
+        chroma_collection.add(ids=ids, documents=documents)
     except Exception as e:
         print(e)
 
@@ -75,10 +78,6 @@ def rag(question, retrieved_documents, model="gpt-4o-mini"):
     response = openai_client.chat.completions.create(model=model, messages=messages)
     content = response.choices[0].message.content
     return content
-
-
-embed_function = SentenceTransformerEmbeddingFunction()
-chroma_collection = chroma_client.create_collection("data_collection", embedding_function=embed_function)
 
 
 if __name__ == "__main__":
