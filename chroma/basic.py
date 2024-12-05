@@ -46,15 +46,16 @@ def rag(question, retrieved_documents, model="gpt-4o-mini"):
 
 
 if __name__ == "__main__":
-    pdf_data = read_pdf("sample.pdf")
+    pdf_data = read_pdf("../sample.pdf")
     pdf_data_documents = chunk_texts(pdf_data)
     embed_documents(pdf_data_documents)
 
     query = "what is attention?"
     results = chroma_collection.query(query_texts=[query], n_results=5)
     retrieved_documents = results["documents"][0]
-    print(retrieved_documents)
+    print(f"Query: {query}")
+    print(f"Retrieved documents: {retrieved_documents}")
 
     response = rag(query, retrieved_documents)
-    print(response)
+    print(f"Answer: {response}")
 

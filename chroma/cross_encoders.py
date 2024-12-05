@@ -8,6 +8,8 @@ from chromadb.utils.embedding_functions.sentence_transformer_embedding_function 
 
 from sentence_transformers import CrossEncoder
 
+import numpy as np
+
 from dotenv import load_dotenv, find_dotenv
 
 from helper_functions import read_pdf, chunk_texts
@@ -22,7 +24,7 @@ chromadb_client = chromadb.Client()
 embed_function = SentenceTransformerEmbeddingFunction()
 chroma_collection = chromadb_client.create_collection("data_collection", embedding_function=embed_function)
 
-cross_encoder = CrossEncoder("cross_encoder/ms-marco-MiniLM-L-6-v2")
+cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
 
 def embed_document(documents):
@@ -41,17 +43,21 @@ def rank_documents(query, documents):
         for i, score in enumerate(scores):
             scored_docs.append((documents[i], score))
         ranked_docs = sorted(scored_docs, key=lambda x: x[1], reverse=True)
+        print(np.argsort(scores)[::-1])
         return ranked_docs
     except Exception as e:
         print(e)
 
 
 if __name__ == "__main__":
-    pdf_data = read_pdf("sample.pdf")
+    pdf_data = read_pdf("../sample.pdf")
     documents = chunk_texts(pdf_data)
     embed_document(documents)
     query = "What is the capital of France?"
-    results = chroma_collection.query(query, n_results=10, include=["documents", "embeddings"])
-    retrieved_docs = results["documents"]
+    results = chroma_collection.query(query_texts=query, n_results=10, include=["documents", "embeddings"])
+    retrieved_docs = results["documents"][0]
+    print(f"Query: {query}")
+    print(f"Retrieved documents: {retrieved_docs}")
+    print("Ranking documents...")
     ranked_docs = rank_documents(query, retrieved_docs)
-    print(ranked_docs)
+    print(f"Ranked documents: {ranked_docs}")

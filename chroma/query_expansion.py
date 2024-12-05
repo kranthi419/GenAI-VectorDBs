@@ -81,32 +81,41 @@ def rag(question, retrieved_documents, model="gpt-4o-mini"):
 
 
 if __name__ == "__main__":
-    pdf_data = read_pdf("sample.pdf")
+    pdf_data = read_pdf("../sample.pdf")
     pdf_data_documents = chunk_texts(pdf_data)
     embed_documents(pdf_data_documents)
 
     # HyDe: Hypothetical Document Expansion
+    print("***************************************")
+    print("Hypothetical Document Expansion")
+    print("***************************************")
     query = "what is attention?"
     hypothetical_answer = hypothetical_answer_generation(query)
     results = chroma_collection.query(query_texts=[hypothetical_answer], n_results=5)
     retrieved_documents = results["documents"][0]
+    print("Retrieved documents:")
     print(retrieved_documents)
 
     response = rag(query, retrieved_documents)
-    print(response)
+    print(f"Query: {query}")
+    print(f"Answer: {response}")
 
     # Sub-query generation
+    print("***************************************")
+    print("Sub-query generation")
+    print("***************************************")
     sub_queries = sub_query_generation(query)
-    results = chroma_collection.query(query_texts=sub_queries+["query"], n_results=5)
+    print("Sub-queries:")
+    print(sub_queries)
+    results = chroma_collection.query(query_texts=sub_queries+[query], n_results=5)
     unique_documents = set()
-    for documents in retrieved_documents:
+    for documents in results["documents"]:
         for document in documents:
             unique_documents.add(document)
+    print("Unique documents:")
     print(unique_documents)
 
     response = rag(query, unique_documents)
-    print(response)
-
-
-
+    print(f"Query: {query}")
+    print(f"Answer: {response}")
 
